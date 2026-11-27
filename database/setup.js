@@ -66,6 +66,30 @@ const Task = db.define('Task', {
     }
 });
 
+// Users Model
+
+const User = db.define('User', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
+    email: {
+        type: DataTypes.STRING,
+        required: false,
+        unique: true
+    },
+    password: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    }
+});
+
+
 // Export for use in other files
 module.exports = { db, Project, Task };
 
