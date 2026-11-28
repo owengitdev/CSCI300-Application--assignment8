@@ -48,6 +48,7 @@ app.get('/api/projects/:id', async (req, res) => {
     }
 });
 
+
 // POST /api/projects - Create new project
 app.post('/api/projects', async (req, res) => {
     try {
@@ -202,6 +203,62 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
+
+
+
+// POST /api/login - User Login
+
+app.post('/api/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid email or password' });
+        }
+        
+        
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        if (!isValidPassword) {
+            return res.status(401).json({ error: 'Invalid email or password' });
+        }
+        
+        
+        req.session.userId = user.id;
+        req.session.userName = user.name;
+        req.session.userEmail = user.email;
+        
+        res.json({
+            message: 'Login successful',
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error logging in user:', error);
+        res.status(500).json({ error: 'Failed to login' });
+    }
+});
+
+
+
+
+// POST /api/logout
+app.post('/api/logout', (req, res) => { 
+    req.session.destroy((err) => { 
+        if(err) { 
+            console.error('Error destroying the session', err); 
+            return res.status(500).json({ error: 
+        'Failed to logout' }) 
+        } 
+        res.json({ message: "Logout successful" }) 
+    }) 
+})
+
 // PUT /api/tasks/:id - Update existing task
 app.put('/api/tasks/:id', async (req, res) => {
     try {
@@ -241,6 +298,24 @@ app.delete('/api/tasks/:id', async (req, res) => {
         res.status(500).json({ error: 'Failed to delete task' });
     }
 });
+
+// Authentication Middleware 
+
+function requireAuth(req, res, next) {
+    if (req.session && req.session.userId) {
+        req.user = {
+            id: req.session.userId,
+            name: req.session.userName,
+            email: req.session.userEmail
+        };
+        next();
+    } else {
+        res.status(401).json({ 
+            error: 'Authentication required. Please log in.' 
+        });
+    }
+}
+
 
 // Start server
 app.listen(PORT, () => {
